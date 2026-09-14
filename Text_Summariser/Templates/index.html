@@ -1,81 +1,352 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Urias Text Summarizer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Text Summarizer — Intelligent Multi-Engine Platform</title>
+  <meta name="description"
+    content="Next-generation text summarization platform with dual local NLP and Gemini AI engines, web article scraping, PDF uploads, and real-time reading analytics.">
 
-        .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            width: 500px;
-            text-align: center;
-        }
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet">
 
-        h1 {
-            color: #333;
-            font-size: 36px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            resize: none;
-            margin-bottom: 20px;
-        }
-
-        button {
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            font-size: 16px;
-            text-decoration: none;
-            color: #007BFF;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
-    <div class="container">
-        <h1>Urias Text Summarizer</h1>
-        <form method="POST" action="/summarize">
-            <textarea name="text" placeholder="Enter text to summarize"></textarea><br><br>
-            <button type="submit">Summarize</button>
-        </form>
+  <!-- Ambient background glow -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-symbol">
+          <span class="symbol-core"></span>
+          <span class="symbol-pulse"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">AI<span class="accent-dot">.</span>Summarizer</span>
+          <span class="brand-badge">v2.0 Hybrid</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Engine Indicator / Selector -->
+        <div class="engine-switch-box" title="Select Summarization Engine">
+          <button type="button" class="engine-pill active" id="engine-btn-local" data-engine="local">
+            <span class="engine-icon">⚡</span> Local NLP
+          </button>
+          <button type="button" class="engine-pill" id="engine-btn-gemini" data-engine="gemini">
+            <span class="engine-icon">🧠</span> Gemini AI
+          </button>
+        </div>
+
+        <!-- API Key Settings Button -->
+        <button type="button" class="btn-icon" id="open-settings-btn" title="API Key Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+          </svg>
+        </button>
+
+        <!-- Theme Switch Pill -->
+        <div class="theme-switch-wrapper">
+          <button type="button" class="theme-toggle-pill" id="theme-toggle-btn" aria-label="Toggle Light / Dark Theme" title="Switch Theme (Alt + T)">
+            <span class="theme-icon-indicator" id="theme-icon">🌙</span>
+            <span class="theme-text" id="theme-text">Dark Mode</span>
+          </button>
+        </div>
+      </div>
     </div>
+  </header>
+
+  <!-- Main Application Workspace -->
+  <main class="app-workspace">
+    <div class="workspace-grid">
+
+      <!-- ======================================================================
+           Left Pane: Ingestion & Control Hub
+           ====================================================================== -->
+      <section class="pane-card input-pane">
+        <!-- Ingestion Tabs -->
+        <div class="tab-nav">
+          <button type="button" class="tab-btn active" data-tab="tab-text">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Paste Text
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-url">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            Article URL
+          </button>
+          <button type="button" class="tab-btn" data-tab="tab-file">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Upload File
+          </button>
+        </div>
+
+        <!-- Tab 1: Text Input -->
+        <div class="tab-pane active" id="tab-text">
+          <div class="textarea-wrapper">
+            <textarea id="source-text" class="custom-textarea"
+              placeholder="Paste article, research paper, meeting transcript, or notes to summarize..."></textarea>
+            <div class="textarea-footer">
+              <div class="text-stats">
+                <span id="word-count">0 words</span> &bull;
+                <span id="char-count">0 chars</span> &bull;
+                <span id="read-estimate">~0 min read</span>
+              </div>
+              <button type="button" class="btn-subtle" id="clear-text-btn">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Article URL -->
+        <div class="tab-pane" id="tab-url">
+          <div class="url-input-card">
+            <label for="url-input" class="field-label">Extract &amp; Summarize Web Article</label>
+            <div class="url-input-row">
+              <input type="url" id="url-input" class="custom-input" placeholder="https://example.com/blog/article">
+              <button type="button" class="btn-secondary" id="fetch-url-btn">
+                <span>Fetch Text</span>
+              </button>
+            </div>
+            <div class="url-fetch-status" id="url-status"></div>
+            <p class="field-hint">Extracts clean article paragraphs, eliminating ads and navigation noise.</p>
+          </div>
+        </div>
+
+        <!-- Tab 3: Upload File -->
+        <div class="tab-pane" id="tab-file">
+          <div class="drop-zone" id="file-drop-zone">
+            <input type="file" id="file-input" accept=".txt,.md,.pdf" style="display: none;">
+            <div class="drop-icon">📂</div>
+            <div class="drop-title">Drag &amp; drop document here</div>
+            <div class="drop-subtext">Supports <strong>.PDF</strong>, <strong>.TXT</strong>, and <strong>.MD</strong>
+              (up to 16MB)</div>
+            <button type="button" class="btn-secondary" id="browse-file-btn" style="margin-top: 14px;">Browse
+              File</button>
+            <div class="file-info" id="file-info" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- Summary Configuration Controls -->
+        <div class="controls-section">
+          <!-- Format Selector -->
+          <div class="control-group">
+            <label class="control-label">Summary Format</label>
+            <div class="format-chips-grid">
+              <button type="button" class="format-chip active" data-format="paragraph">
+                <span class="chip-icon">📄</span>
+                <span class="chip-label">Executive Paragraph</span>
+              </button>
+              <button type="button" class="format-chip" data-format="bullets">
+                <span class="chip-icon">📌</span>
+                <span class="chip-label">Key Takeaways</span>
+              </button>
+              <button type="button" class="format-chip" data-format="tldr">
+                <span class="chip-icon">⚡</span>
+                <span class="chip-label">TL;DR One-Liner</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Density / Length Slider -->
+          <div class="control-group" id="density-control-group">
+            <div class="slider-header">
+              <label class="control-label" for="ratio-slider">Summary Density</label>
+              <span class="slider-val-badge" id="ratio-display">Balanced (35%)</span>
+            </div>
+            <input type="range" id="ratio-slider" min="15" max="60" value="35" step="5" class="custom-slider">
+            <div class="slider-ticks">
+              <span>Concise</span>
+              <span>Balanced</span>
+              <span>Detailed</span>
+            </div>
+          </div>
+
+          <!-- Quick Sample Presets -->
+          <div class="presets-row">
+            <span class="presets-label">Try sample:</span>
+            <button type="button" class="preset-tag" data-sample="ai">AI Research</button>
+            <button type="button" class="preset-tag" data-sample="tech">Tech News</button>
+            <button type="button" class="preset-tag" data-sample="business">Business Memo</button>
+          </div>
+
+          <!-- Primary Summarize Button -->
+          <button type="button" class="btn-primary-glow" id="summarize-btn">
+            <span class="btn-text">Generate Summary</span>
+            <span class="btn-spinner" id="btn-spinner" style="display: none;"></span>
+            <span class="btn-shortcut">Ctrl + ↵</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           Right Pane: Summary Intelligence & Analytics
+           ====================================================================== -->
+      <section class="pane-card output-pane">
+        <!-- Analytics Ribbon -->
+        <div class="metrics-ribbon" id="metrics-ribbon" style="display: none;">
+          <div class="metric-card">
+            <span class="metric-val" id="metric-compression">0%</span>
+            <span class="metric-label">Reduced</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-val" id="metric-time-saved">0s</span>
+            <span class="metric-label">Time Saved</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-val" id="metric-words">0 &rarr; 0</span>
+            <span class="metric-label">Word Count</span>
+          </div>
+        </div>
+
+        <!-- Summary Header Bar -->
+        <div class="summary-header-bar">
+          <div class="summary-title-row">
+            <h2 class="summary-heading">Synthesized Summary</h2>
+            <span class="badge-engine" id="badge-engine">⚡ Local NLP</span>
+          </div>
+
+          <div class="action-toolbar" id="action-toolbar" style="display: none;">
+            <!-- Copy -->
+            <button type="button" class="tool-btn" id="copy-summary-btn" title="Copy to Clipboard">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy</span>
+            </button>
+            <!-- Audio Playback -->
+            <button type="button" class="tool-btn" id="read-aloud-btn" title="Listen to Summary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+              <span id="speech-btn-label">Listen</span>
+            </button>
+            <!-- Download -->
+            <button type="button" class="tool-btn" id="download-summary-btn" title="Download Summary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Result Box -->
+        <div class="summary-content-box" id="summary-content-box">
+          <!-- Empty State View -->
+          <div class="empty-state" id="empty-state">
+            <div class="empty-illustration">⚡</div>
+            <h3 class="empty-title">Ready to Summarize</h3>
+            <p class="empty-desc">
+              Paste your text on the left, load an article via URL, or drop a document to synthesize core takeaways
+              instantly.
+            </p>
+          </div>
+
+          <!-- Loading Skeleton View -->
+          <div class="skeleton-view" id="skeleton-view" style="display: none;">
+            <div class="skeleton-line" style="width: 88%;"></div>
+            <div class="skeleton-line" style="width: 95%;"></div>
+            <div class="skeleton-line" style="width: 76%;"></div>
+            <div class="skeleton-line" style="width: 92%;"></div>
+            <div class="skeleton-line" style="width: 65%;"></div>
+          </div>
+
+          <!-- Formatted Summary Output -->
+          <div class="summary-body" id="summary-text" style="display: none;"></div>
+        </div>
+
+        <!-- Keywords & Entity Tags -->
+        <div class="keywords-panel" id="keywords-panel" style="display: none;">
+          <span class="keywords-title">Key Concepts &amp; Themes:</span>
+          <div class="keywords-chips-wrap" id="keywords-chips"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ======================================================================
+       Settings & API Key Modal
+       ====================================================================== -->
+  <div class="modal-backdrop" id="settings-modal" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Summarization Engine Settings</h3>
+        <button type="button" class="btn-close" id="close-settings-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Configure optional Google Gemini credentials for high-level abstractive AI summarization.
+          If no key is provided, the platform automatically uses the ultra-fast built-in Local NLP engine.
+        </p>
+
+        <div class="form-field">
+          <label for="gemini-api-key" class="field-label">Google Gemini API Key</label>
+          <input type="password" id="gemini-api-key" class="custom-input" placeholder="AIzaSy...">
+          <span class="field-hint">
+            Stored locally in your browser session. Leave blank to run 100% on the local offline engine.
+          </span>
+        </div>
+
+        <div class="form-field" style="margin-top: 20px;">
+          <label class="field-label">Color Theme Preference</label>
+          <div class="theme-radio-group">
+            <label class="theme-radio-card">
+              <input type="radio" name="theme-pref" value="dark">
+              <span>🌙 Dark</span>
+            </label>
+            <label class="theme-radio-card">
+              <input type="radio" name="theme-pref" value="light">
+              <span>☀️ Light</span>
+            </label>
+            <label class="theme-radio-card">
+              <input type="radio" name="theme-pref" value="system">
+              <span>💻 Auto (OS)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-subtle" id="modal-cancel-btn">Cancel</button>
+        <button type="button" class="btn-primary" id="save-settings-btn">Save Preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/app.js"></script>
 </body>
+
 </html>

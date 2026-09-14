@@ -1,13 +1,39 @@
-from flask import Flask, request, render_template
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize
+"""
+AI Text Summarizer - Modern Hybrid Application
+Dual Engine (Local Extractive NLP + Google Gemini AI)
+"""
 
-# Ensure you have downloaded the necessary NLTK data files
-nltk.download('punkt')
-nltk.download('stopwords')
+import os
+from pathlib import Path
+from flask import Flask, request, jsonify, render_template
 
-app = Flask(__name__)
+# Load environment variables if .env exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+from summarizer import (
+    summarize_local,
+    summarize_gemini,
+    extract_keywords,
+    calculate_metrics,
+    ensure_nltk_resources
+)
+from scraper import extract_from_url, extract_from_file
+
+BASE_DIR = Path(__file__).resolve().parent
+
+app = Flask(
+    __name__,
+    template_folder=str(BASE_DIR / 'templates'),
+    static_folder=str(BASE_DIR / 'static')
+)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload limit
+
+# Pre-warm NLTK resources in the background
+ensure_nltk_resources()
 
 
 @app.route('/')
@@ -15,60 +41,138 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/summarize', methods=['POST'])
-def summarize():
-    if request.method == 'POST':
-        # Get text from the form
-        text = request.form['text']
-
-        if not text.strip():
-            return "Please provide valid text to summarize.", 400
-
-        # Tokenizing the text
-        stopWords = set(stopwords.words("english"))
-        words = word_tokenize(text)
-
-        # Creating a frequency table
-        freqTable = dict()
-        for word in words:
-            word = word.lower()
-            if word in stopWords:
-                continue
-            if word in freqTable:
-                freqTable[word] += 1
-            else:
-                freqTable[word] = 1
-
-        # Scoring sentences
-        sentences = sent_tokenize(text)
-        sentenceValue = dict()
-        for sentence in sentences:
-            for word, freq in freqTable.items():
-                if word in sentence.lower():
-                    if sentence in sentenceValue:
-                        sentenceValue[sentence] += freq
-                    else:
-                        sentenceValue[sentence] = freq
-
-        # Calculating average sentence value
-        sumValues = sum(sentenceValue.values())
-        average = int(sumValues / len(sentenceValue)) if sentenceValue else 0
-
-        # Generating summary
-        summary = ''
-        for sentence in sentences:
-            if sentence in sentenceValue and sentenceValue[sentence] > (1.2 * average):
-                summary += " " + sentence
-
-        return render_template('result.html', summary=summary)
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({
+        "status": "online",
+        "service": "AI Text Summarizer",
+        "version": "2.0.0",
+        "has_gemini_key": bool(os.environ.get("GEMINI_API_KEY"))
+    })
 
 
-# HTML templates
-@app.route('/templates/<filename>')
-def serve_file(filename):
-    with open(f'templates/{filename}', 'r') as f:
-        return f.read()
+@app.route('/api/summarize', methods=['POST'])
+def handle_summarize():
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        text = data.get('text', '').strip()
+        engine = data.get('engine', 'local').lower()
+        output_format = data.get('format', 'paragraph').lower()
+        ratio = float(data.get('ratio', 0.35))
+        api_key = data.get('api_key', '').strip() or None
+
+        if not text:
+            return jsonify({"error": "Please provide text to summarize."}), 400
+
+        words = text.split()
+        if len(words) < 10:
+            return jsonify({"error": "Text is too brief. Please enter at least 10 words."}), 400
+
+        # Validate format
+        if output_format not in ['paragraph', 'bullets', 'tldr']:
+            output_format = 'paragraph'
+
+        # Clamp ratio between 0.15 and 0.70
+        ratio = max(0.15, min(0.70, ratio))
+
+        fallback_occurred = False
+        fallback_reason = None
+        result = None
+
+        if engine == 'gemini':
+            try:
+                result = summarize_gemini(
+                    text=text,
+                    output_format=output_format,
+                    ratio=ratio,
+                    api_key=api_key
+                )
+            except Exception as e:
+                # Graceful fallback to local engine
+                fallback_occurred = True
+                fallback_reason = str(e)
+                result = summarize_local(
+                    text=text,
+                    ratio=ratio,
+                    output_format=output_format
+                )
+        else:
+            result = summarize_local(
+                text=text,
+                ratio=ratio,
+                output_format=output_format
+            )
+
+        summary_text = result["summary"]
+        metrics = calculate_metrics(text, summary_text)
+        keywords = extract_keywords(text, top_n=8)
+
+        response_payload = {
+            "summary": summary_text,
+            "engine": result["engine"],
+            "format": result["format"],
+            "fallback": fallback_occurred,
+            "fallback_reason": fallback_reason,
+            "metrics": metrics,
+            "keywords": keywords,
+            "selected_sentence_indices": result.get("selected_sentence_indices", [])
+        }
+
+        return jsonify(response_payload), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Summarization failed: {str(e)}"}), 500
+
+
+@app.route('/api/extract-url', methods=['POST'])
+def handle_extract_url():
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        url = data.get('url', '').strip()
+        if not url:
+            return jsonify({"error": "URL cannot be empty."}), 400
+
+        extracted = extract_from_url(url)
+        return jsonify(extracted), 200
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except ConnectionError as ce:
+        return jsonify({"error": str(ce)}), 502
+    except Exception as e:
+        return jsonify({"error": f"Failed to extract URL: {str(e)}"}), 500
+
+
+@app.route('/api/upload', methods=['POST'])
+def handle_upload():
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file uploaded."}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No file selected."}), 400
+
+        extracted = extract_from_file(file)
+        return jsonify(extracted), 200
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Upload processing failed: {str(e)}"}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import webbrowser
+    import threading
+
+    port = int(os.environ.get('PORT', 5000))
+    url = f"http://127.0.0.1:{port}"
+    print(f"\n=======================================================")
+    print(f"🚀 AI Text Summarizer v2.0 running at {url}")
+    print(f"🌐 Opening default web browser automatically...")
+    print(f"=======================================================\n")
+
+    # Auto-open browser on launch (avoid duplicate tabs when Werkzeug reloads)
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
+
+    app.run(host='0.0.0.0', port=port, debug=True)
