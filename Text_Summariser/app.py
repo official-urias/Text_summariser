@@ -4,30 +4,53 @@ Dual Engine (Local Extractive NLP + Google Gemini AI)
 """
 
 import os
+import sys
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template
 
-# Load environment variables if .env exists
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-from summarizer import (
-    summarize_local,
-    summarize_gemini,
-    extract_keywords,
-    calculate_metrics,
-    ensure_nltk_resources
-)
-from scraper import extract_from_url, extract_from_file
-
+# Ensure the app's directory is always in sys.path for direct and package imports
 BASE_DIR = Path(__file__).resolve().parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+# Optional .env loading without external dependencies
+_env_file = BASE_DIR.parent / '.env'
+if _env_file.exists():
+    try:
+        with open(_env_file, 'r', encoding='utf-8') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith('#') and '=' in _line:
+                    _k, _v = _line.split('=', 1)
+                    os.environ.setdefault(_k.strip(), _v.strip().strip("'\""))
+    except Exception:
+        pass
+
+try:
+    from summarizer import (
+        summarize_local,
+        summarize_gemini,
+        extract_keywords,
+        calculate_metrics,
+        ensure_nltk_resources
+    )
+    from scraper import extract_from_url, extract_from_file
+except ImportError:
+    from Text_Summariser.summarizer import (
+        summarize_local,
+        summarize_gemini,
+        extract_keywords,
+        calculate_metrics,
+        ensure_nltk_resources
+    )
+    from Text_Summariser.scraper import extract_from_url, extract_from_file
+
+# Resolve templates folder regardless of case sensitivity
+template_dir = BASE_DIR / 'Templates' if (BASE_DIR / 'Templates').exists() else BASE_DIR / 'templates'
 
 app = Flask(
     __name__,
-    template_folder=str(BASE_DIR / 'templates'),
+    template_folder=str(template_dir),
     static_folder=str(BASE_DIR / 'static')
 )
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload limit
