@@ -10,9 +10,15 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
-from summarizer import summarize_local, extract_keywords, calculate_metrics
-from scraper import extract_from_url
-from app import app
+try:
+    from summarizer import summarize_local, extract_keywords, calculate_metrics
+    from scraper import extract_from_url
+    from app import app as flask_app
+except ImportError:
+    from Text_Summariser.summarizer import summarize_local, extract_keywords, calculate_metrics
+    from Text_Summariser.scraper import extract_from_url
+    from Text_Summariser.app import app as flask_app
+
 
 
 SAMPLE_TEXT = (
@@ -63,7 +69,7 @@ class TestSummarizerCore(unittest.TestCase):
 class TestFlaskAPI(unittest.TestCase):
 
     def setUp(self):
-        self.client = app.test_client()
+        self.client = flask_app.test_client()
         self.client.testing = True
 
     def test_get_index(self):

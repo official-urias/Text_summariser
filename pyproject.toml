@@ -1,0 +1,5 @@
+[tool.vercel]
+entrypoint = "Text_Summariser.app:app"
+
+[tool.pyright]
+extraPaths = ["Text_Summariser"]
