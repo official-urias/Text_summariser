@@ -35,10 +35,11 @@ def extract_from_url(url: str) -> dict:
 
     # Extract title
     title = ""
-    if soup.title and soup.title.string:
-        title = soup.title.string.strip()
-    elif soup.find('h1'):
-        title = soup.find('h1').get_text().strip()
+    h1 = soup.find('h1')
+    if soup.title and soup.title.get_text(strip=True):
+        title = soup.title.get_text(strip=True)
+    elif h1:
+        title = h1.get_text().strip()
 
     # Remove non-content elements
     for element in soup(["script", "style", "nav", "footer", "header", "aside", "form", "noscript", "svg", "iframe"]):

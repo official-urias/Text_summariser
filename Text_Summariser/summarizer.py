@@ -7,6 +7,7 @@ and AI abstractive summarization via Google Gemini (google-genai SDK).
 import os
 import re
 import math
+from typing import Optional
 from collections import Counter
 
 # Safe NLTK initialization with fallbacks
@@ -187,7 +188,7 @@ def summarize_local(text: str, ratio: float = 0.35, output_format: str = "paragr
     }
 
 
-def summarize_gemini(text: str, output_format: str = "paragraph", ratio: float = 0.35, api_key: str = None) -> dict:
+def summarize_gemini(text: str, output_format: str = "paragraph", ratio: float = 0.35, api_key: Optional[str] = None) -> dict:
     """
     AI Abstractive Summarizer powered by Google Gemini (gemini-2.5-flash).
     Rewrites and consolidates the text intelligently with zero sentence cutting.

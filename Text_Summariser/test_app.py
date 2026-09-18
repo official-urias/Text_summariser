@@ -69,8 +69,8 @@ class TestSummarizerCore(unittest.TestCase):
 class TestFlaskAPI(unittest.TestCase):
 
     def setUp(self):
+        flask_app.testing = True
         self.client = flask_app.test_client()
-        self.client.testing = True
 
     def test_get_index(self):
         response = self.client.get('/')
